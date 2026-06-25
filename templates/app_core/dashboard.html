@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}แดชบอร์ดจัดการงาน | DroneMarket{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="p-4 bg-white shadow-sm rounded-3 border-start border-primary border-4">
+            <h2>ยินดีต้อนรับสู่ระบบ, {{ user.username }} 👋</h2>
+            <p class="text-muted mb-0">นี่คือหน้าแดชบอร์ดส่วนตัวของคุณสำหรับจัดการกิจกรรมโดรนทั้งหมด</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% if user.role == 'C' %}
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">📝 ประกาศงานใหม่</h5>
+                    <p class="card-text text-muted">คลิกที่นี่เพื่อกำหนดตำแหน่ง วาดขอบเขตแปลงบนแผนที่ และเปิดรับสมัครนักบินโดรน</p>
+                    <a href="#" class="btn btn-primary w-100 mt-2">สร้างงานจ้างโดรน</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title">งานที่คุณประกาศไว้ล่าสุด</h5>
+                    <p class="text-muted text-center my-4">ยังไม่มีประวัติการประกาศงานจ้าง</p>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title text-success">🔍 ค้นหางานรอบตัว</h5>
+                    <p class="card-text text-muted">ดูแผนที่ประกาศงานในพื้นที่ให้บริการของคุณ ยื่นเสนอราคาและกดรับงานเลย</p>
+                    <a href="#" class="btn btn-success w-100 mt-2">ค้นหางานบินโดรน</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title">งานที่คุณกำลังดำเนินการ</h5>
+                    <p class="text-muted text-center my-4">ยังไม่มีงานที่คุณกดรับไว้ในขณะนี้</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
