@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base/base.html' %}
 {% block title %}แดชบอร์ดจัดการงาน | DroneMarket{% endblock %}
 
 {% block content %}
@@ -12,7 +12,8 @@
 </div>
 
 <div class="row g-4">
-    {% if user.role == 'C' %}
+    
+        <a href="{% url 'job_create' %}" class="btn btn-primary w-100 mt-2">สร้างงานจ้างโดรน</a> 
         <div class="col-md-4">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
@@ -31,7 +32,8 @@
             </div>
         </div>
 
-    {% else %}
+    
+        <a href="{% url 'job_list' %}" class="btn btn-success w-100 mt-2">ค้นหางานบินโดรน</a> 
         <div class="col-md-4">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
@@ -49,6 +51,6 @@
                 </div>
             </div>
         </div>
-    {% endif %}
+    
 </div>
 {% endblock %}

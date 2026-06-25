@@ -1,0 +1,100 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ job.title }} | DroneMarket{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    /* ตั้งขนาดของพื้นที่แสดงแผนที่ */
+    #map {
+        width: 100%;
+        height: 380px;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-7">
+        <div class="p-4 bg-white shadow-sm rounded-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge bg-primary fs-6">{{ job.category.name }}</span>
+                <span class="text-muted">ประกาศเมื่อ: {{ job.created_at|date:"d M Y" }}</span>
+            </div>
+            <h2>{{ job.title }}</h2>
+            <p class="text-muted fs-5">👤 ผู้จ้าง: {{ job.client.username }}</p>
+            <hr>
+            <h5>รายละเอียดงาน:</h5>
+            <p class="text-secondary" style="white-space: pre-line;">{{ job.description }}</p>
+            
+            <div class="mt-4 alert alert-info">
+                <p class="mb-1">💰 <strong>งบประมาณที่ตั้งไว้:</strong> {{ job.budget_min }} - {{ job.budget_max }} บาท</p>
+                <p class="mb-1">📅 <strong>วันทำงานจริง:</strong> {{ job.start_date|date:"d M Y H:i" }} น.</p>
+                <p class="mb-0">⏳ <strong>หมดเขตรับสมัคร:</strong> {{ job.deadline|date:"d M Y" }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h5 class="card-title mb-3">📍 ตำแหน่งและขอบเขตงานภูมิศาสตร์</h5>
+                <p class="text-muted mb-3">ที่อยู่หน้างาน: {{ job.address_text }}</p>
+                
+                <div id="map" class="border rounded"></div>
+                
+                <div class="mt-3 text-end">
+                    <small class="text-muted">ประเภทข้อมูล GIS: <strong>{{ job.location.geom_type }}</strong></small>
+                </div>
+                
+                
+                <button class="btn btn-success w-100 btn-lg mt-4">🎯 ยื่นข้อเสนอรับงานนี้</button>
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // 1. ตั้งค่าแผนที่เริ่มต้น (เปิดแผนที่ขึ้นมาก่อน)
+    var map = L.map('map').setView([13.736717, 100.523186], 6);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 2. ดึงข้อมูลพิกัดภูมิศาสตร์ GeoJSON จากหลังบ้าน GeoDjango
+    // 💡 สำคัญมาก: ต้องใส่ filter |safe เพื่อไม่ให้ Django แปลงเครื่องหมายคำพูดเป็นรหัสอักขระ HTML
+    var geojsonData = {{ job.location.json|safe }};
+
+    // 3. สั่งให้ Leaflet วาดพิกัดจากข้อมูล GeoJSON ลงบนแผนที่อัตโนมัติ
+    var geojsonLayer = L.geoJSON(geojsonData, {
+        style: function (feature) {
+            return {
+                color: "#0d6efd",     // เส้นขอบสีน้ำเงิน Bootstrap
+                weight: 3,            // ความหนาเส้น
+                fillColor: "#0d6efd", 
+                fillOpacity: 0.25     // ความโปร่งแสงของพื้นที่แปลง
+            };
+        },
+        pointToLayer: function (feature, latlng) {
+            // กรณีเป็นงานประเภทปักหมุด (Point) ให้แสดงผลเป็นตัวมาร์กเกอร์
+            return L.marker(latlng);
+        }
+    }).addTo(map);
+
+    // 4. 🔥 เขียนคำสั่งคำนวณระยะการซูม (Auto Zoom & Pan) เพื่อให้แผนที่วิ่งไปโฟกัสรูปที่วาดทันที
+    if (geojsonData.type === "Point") {
+        // งานปักจุดถ่ายภาพ: ให้กระโดดไปหาพิกัดนั้น และซูมเข้าไปใกล้ๆ เลเวล 15
+        var coords = geojsonData.coordinates;
+        map.setView([coords[1], coords[0]], 15);
+    } else {
+        // งานวาดแปลงเกษตร หรือลากเส้นทางถนน: ให้ขยายหน้าจอให้พอดีกับขอบเขต (Bounds) ของรูปนั้นทั้งหมดพอดี
+        map.fitBounds(geojsonLayer.getBounds(), { padding: [20, 20] });
+    }
+</script>
+{% endblock %}

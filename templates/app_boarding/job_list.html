@@ -1,0 +1,33 @@
+{% extends 'base/base.html' %}
+{% block title %}รายการประกาศงานโดรนทั้งหมด | DroneMarket{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🛸 ประกาศหานักบินโดรนล่าสุด</h2>
+
+    <a href="{% url 'job_create' %}" class="btn btn-primary">+ ลงประกาศงานใหม่</a>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for job in jobs %}
+    <div class="col">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title text-truncate">{{ job.title }}</h5>
+                    <span class="badge bg-success">{{ job.category.name }}</span>
+                </div>
+                <p class="card-text text-muted text-truncate">{{ job.description }}</p>
+                <p class="mb-1">📍 <strong>พื้นที่:</strong> {{ job.address_text }}</p>
+                <p class="mb-3 text-primary">💰 <strong>งบประมาณ:</strong> {{ job.budget_min }} - {{ job.budget_max }} บาท</p>
+                <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline-secondary btn-sm w-100">ดูรายละเอียดและพิกัดงาน</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center my-5 text-muted">
+        <h5>ยังไม่มีประกาศงานเปิดรับสมัครในขณะนี้</h5>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

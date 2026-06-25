@@ -1,0 +1,156 @@
+{% extends 'base/base.html' %}
+{% block title %}ลงประกาศงานโดรนใหม่ | DroneMarket{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+<style>
+    /* ตั้งค่าขนาดแผนที่ */
+    #map {
+        width: 100%;
+        height: 450px;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card shadow-sm border-0 p-4 bg-white">
+            <h3 class="mb-4 text-center">🛸 ลงประกาศรับสมัครนักบินโดรน</h3>
+            <form method="post" id="jobForm">
+                {% csrf_token %}
+                
+                {{ form.location }}
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">ประเภทงานโดรน</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">หัวข้อประกาศงาน</label>
+                        {{ form.title }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">รายละเอียดงานโดยย่อ</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">งบประมาณเริ่มต้น (บาท)</label>
+                        {{ form.budget_min }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">งบประมาณสูงสุด (บาท)</label>
+                        {{ form.budget_max }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">ระบุพื้นที่/ที่ตั้ง (ข้อความบอกตำแหน่งคร่าวๆ)</label>
+                        {{ form.address_text }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">เดดไลน์เปิดรับสมัคร</label>
+                        {{ form.deadline }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">วันที่นัดหมายปฏิบัติงาน</label>
+                        {{ form.start_date }}
+                    </div>
+                    
+                    <div class="col-12 my-3">
+                        <label class="form-label fw-bold d-block text-primary">🗺️ กรุณาวาดตำแหน่งหรือขอบเขตงานลงบนแผนที่</label>
+                        <div id="map" class="border rounded"></div>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-3 mt-4">
+                    <a href="{% url 'dashboard' %}" class="btn btn-light w-50">ยกเลิก</a>
+                    <button type="submit" class="btn btn-primary w-50">บันทึกและเปิดประกาศงาน</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+<script>
+    // 1. ตั้งค่าเริ่มต้นแผนที่ (โฟกัสไปที่ประเทศไทยคร่าวๆ)
+    var map = L.map('map').setView([13.736717, 100.523186], 6);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 2. เตรียม Layer สำหรับเก็บสิ่งที่ผู้ใช้วาด
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    // 3. ตั้งค่าแถบเครื่องมือวาดรูป (Draw Control)
+    var drawControl = new L.Control.Draw({
+        edit: { featureGroup: drawnItems, edit: false, remove: true },
+        draw: {
+            polyline: true,
+            polygon: true,
+            marker: true,
+            circle: false,
+            circlemarker: false,
+            rectangle: false
+        }
+    });
+    map.addControl(drawControl);
+
+    // 4. ฟังก์ชันแปลงข้อมูลสิ่งดาวดให้กลายเป็นรูปแบบ WKT สื่อสารกับ GeoDjango
+    function convertToWKT(layer, type) {
+        if (type === 'marker') {
+            var latlng = layer.getLatLng();
+            return `POINT (${latlng.lng} ${latlng.lat})`;
+        } 
+        else if (type === 'polyline') {
+            var latlngs = layer.getLatLngs();
+            var points = latlngs.map(p => `${p.lng} ${p.lat}`).join(', ');
+            return `LINESTRING (${points})`;
+        } 
+        else if (type === 'polygon') {
+            var latlngs = layer.getLatLngs()[0];
+            var points = latlngs.map(p => `${p.lng} ${p.lat}`).join(', ');
+            // ปิดวงแหวน Polygon พิกัดตัวแรกและตัวสุดท้ายต้องเหมือนกัน
+            points += `, ${latlngs[0].lng} ${latlngs[0].lat}`;
+            return `POLYGON ((${points}))`;
+        }
+        return '';
+    }
+
+    // 5. ดักจับเมื่อผู้ใช้วาดแผนที่เสร็จสิ้น
+    map.on(L.Draw.Event.CREATED, function (e) {
+        var type = e.layerType,
+            layer = e.layer;
+        
+        // เคลียร์รูปเก่าออกก่อน (ให้วาดได้ทีละ 1 รูปต่องาน)
+        drawnItems.clearLayers();
+        drawnItems.addLayer(layer);
+        
+        // แปลงค่าและโยนใส่ Hidden Input ของ Django
+        var wktValue = convertToWKT(layer, type);
+        document.getElementById('id_location').value = wktValue;
+    });
+
+    // ดักจับเมื่อมีการกดลบรูปวาด
+    map.on(L.Draw.Event.DELETED, function () {
+        document.getElementById('id_location').value = '';
+    });
+
+    // 6. แจ้งเตือนก่อนส่งฟอร์มถ้าลืมวาดแผนที่
+    document.getElementById('jobForm').addEventListener('submit', function(e) {
+        var loc = document.getElementById('id_location').value;
+        if (!loc) {
+            e.preventDefault();
+            alert('❌ กรุณาปักจุดหรือวาดขอบเขตแปลงบนแผนที่ก่อนบันทึกงานครับ');
+        }
+    });
+</script>
+{% endblock %}

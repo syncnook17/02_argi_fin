@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',
 
     'app_core',
+    'app_boarding',
 ]
 
 MIDDLEWARE = [
@@ -77,7 +78,7 @@ WSGI_APPLICATION = 'argi_fin_proj.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.contrib.gis.db.backends.spatialite',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
@@ -123,7 +124,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # สำหรับการตั้งค่า redirect หน้า login ให้เป็นหน้าแรก
-LOGIN_REDIRECT_URL = 'index'
+LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'index'
 
 # สำหรับการตั้งค่าเส้นทางของหน้า admin
