@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.gis import forms as gis_forms
-from .models import JobCategory, JobPosting
+from .models import JobCategory, JobPosting, JobApplication
 
 class JobPostingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -23,4 +23,15 @@ class JobPostingForm(forms.ModelForm):
                 'start_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
                 
                 'location': forms.HiddenInput(attrs={'id': 'id_location'}),
+        }
+
+
+# ฟอร์มสำหรับกรอกเสนอราคาและนัดหมาย
+class JobApplicationForm(forms.ModelForm):
+    class Meta:
+        model = JobApplication
+        fields = ['bid_price', 'available_dates']
+        widgets = {
+            'bid_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'ราคาที่เสนอ'}),
+            'available_dates': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }

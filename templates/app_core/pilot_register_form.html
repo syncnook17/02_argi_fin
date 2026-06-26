@@ -1,0 +1,30 @@
+{% extends 'base/base.html' %}
+{% block title %}ลงทะเบียนเป็นนักบินโดรน | DroneMarket{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 p-4 mt-4">
+            <h3 class="text-center mb-4">🛸 อัปเกรดบัญชีเป็นนักบินโดรน</h3>
+            <p class="text-muted text-center">กรุณากรอกข้อมูลเพื่อเปิดสิทธิ์การเข้าถึงข้อมูลแผนที่และยื่นเสนอราคาดพรับงาน</p>
+            <hr>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">เลขที่ใบอนุญาตโดรน (จาก กสทช./CAAT)</label>
+                    {{ form.lic_num }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">เบอร์โทรศัพท์ติดต่อหน้างาน</label>
+                    {{ form.phone }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">รุ่นโดรนและอุปกรณ์เสริมที่มี</label>
+                    {{ form.drone_model }}
+                </div>
+                <button type="submit" class="btn btn-success w-100 mt-3">ยืนยันข้อมูลลงทะเบียนนักบิน</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

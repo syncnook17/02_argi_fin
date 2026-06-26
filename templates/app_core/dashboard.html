@@ -5,52 +5,145 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="p-4 bg-white shadow-sm rounded-3 border-start border-primary border-4">
-            <h2>ยินดีต้อนรับสู่ระบบ, {{ user.username }} 👋</h2>
+            <h2>ยินดีต้อนรับสู่ระบบ, {{ user.username }} </h2>
             <p class="text-muted mb-0">นี่คือหน้าแดชบอร์ดส่วนตัวของคุณสำหรับจัดการกิจกรรมโดรนทั้งหมด</p>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
-    
-        <a href="{% url 'job_create' %}" class="btn btn-primary w-100 mt-2">สร้างงานจ้างโดรน</a> 
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title text-primary">📝 ประกาศงานใหม่</h5>
-                    <p class="card-text text-muted">คลิกที่นี่เพื่อกำหนดตำแหน่ง วาดขอบเขตแปลงบนแผนที่ และเปิดรับสมัครนักบินโดรน</p>
-                    <a href="#" class="btn btn-primary w-100 mt-2">สร้างงานจ้างโดรน</a>
-                </div>
+<div class="row g-4 mb-5">
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body p-4">
+                <h5 class="card-title text-primary"> บัญชีผู้จ้างงาน (Client)</h5>
+                <p class="card-text text-muted">คลิกเพื่อกำหนดตำแหน่ง วาดขอบเขตแปลงบนแผนที่ และเปิดประกาศจ้างงานโดรน</p>
+                <a href="{% url 'job_create' %}" class="btn btn-primary w-100 mt-2">สร้างงานจ้างโดรน</a>
             </div>
         </div>
-        <div class="col-md-8">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title">งานที่คุณประกาศไว้ล่าสุด</h5>
-                    <p class="text-muted text-center my-4">ยังไม่มีประวัติการประกาศงานจ้าง</p>
-                </div>
-            </div>
-        </div>
+    </div>
 
-    
-        <a href="{% url 'job_list' %}" class="btn btn-success w-100 mt-2">ค้นหางานบินโดรน</a> 
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title text-success">🔍 ค้นหางานรอบตัว</h5>
-                    <p class="card-text text-muted">ดูแผนที่ประกาศงานในพื้นที่ให้บริการของคุณ ยื่นเสนอราคาและกดรับงานเลย</p>
-                    <a href="#" class="btn btn-success w-100 mt-2">ค้นหางานบินโดรน</a>
-                </div>
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body p-4">
+                <h5 class="card-title text-success"> บัญชีนักบินโดรน (Pilot)</h5>
+                {% if is_pilot %}
+                    <p class="card-text text-muted">เข้าสู่ระบบแผนที่บอร์ดงาน ยื่นใบเสนอราคาค่าบิน และจัดคิวงานนัดหมายของคุณ</p>
+                    <a href="{% url 'job_list' %}" class="btn btn-success w-100 mt-2">ค้นหางานบินโดรนรอบตัว</a>
+                {% else %}
+                    <p class="card-text text-danger fw-bold"> คุณยังไม่ได้ลงทะเบียนนักบิน คุณจะไม่สามารถกดยื่นเสนอราคารับงานบินใดๆ ได้ในขณะนี้</p>
+                    <a href="{% url 'pilot_register' %}" class="btn btn-warning w-100 mt-2 text-dark fw-bold">🚀 คลิกเพื่อเปิดบัญชีลงทะเบียนนักบินโดรน</a>
+                {% endif %}
             </div>
         </div>
-        <div class="col-md-8">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title">งานที่คุณกำลังดำเนินการ</h5>
-                    <p class="text-muted text-center my-4">ยังไม่มีงานที่คุณกดรับไว้ในขณะนี้</p>
-                </div>
-            </div>
-        </div>
-    
+    </div>
 </div>
+
+<div class="card shadow-sm border-0 mb-5">
+    <div class="card-header bg-white py-3 border-0">
+        <h5 class="card-title mb-0 text-primary fw-bold">ประวัติงานที่คุณลงประกาศไว้ (ฝั่งผู้จ้าง)</h5>
+    </div>
+    <div class="table-responsive px-4 pb-4">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>หัวข้อประกาศงาน</th>
+                    <th>ประเภทโดรน</th>
+                    <th>งบประมาณที่ตั้งไว้</th>
+                    <th>สถานะของงาน</th>
+                    <th class="text-center">การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in my_jobs %}
+                <tr>
+                    <td><strong>{{ job.title }}</strong><br><small class="text-muted"> {{ job.address_text }}</small></td>
+                    <td><span class="badge bg-secondary">{{ job.category.name }}</span></td>
+                    <td>{{ job.budget_min|floatformat:0 }} - {{ job.budget_max|floatformat:0 }} บาท</td>
+                    <td>
+                        {% if job.status == 'PENDING' %}
+                            <span class="badge bg-info text-dark">เปิดรับสมัครนักบิน</span>
+                        {% elif job.status == 'MATCHED' %}
+                            <span class="badge bg-primary">จับคู่สำเร็จ</span>
+                        {% elif job.status == 'IN_PROGRESS' %}
+                            <span class="badge bg-warning text-dark">กำลังดำเนินการบิน</span>
+                        {% elif job.status == 'COMPLETED' %}
+                            <span class="badge bg-success">เสร็จสิ้น/ส่งมอบงานแล้ว</span>
+                        {% else %}
+                            <span class="badge bg-danger">ยกเลิกงาน</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline-primary btn-sm">ตรวจสอบรายชื่อ/ดูดีเทล</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">คุณยังไม่เคยลงประกาศงานจ้างโดรนในระบบเลย</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_pilot %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-0">
+        <h5 class="card-title mb-0 text-success fw-bold">ประวัติการสมัครและรับงานบินโดรนของคุณ (ฝั่งนักบิน)</h5>
+    </div>
+    <div class="table-responsive px-4 pb-4">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ชื่องานที่สนใจ</th>
+                    <th>ราคาที่คุณเสนอ</th>
+                    <th>วันที่นัดหมาย</th>
+                    <th>สถานะข้อเสนอของคุณ</th>
+                    <th>สถานะงานหลัก</th>
+                    <th class="text-center">รายละเอียด</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in my_applications %}
+                <tr>
+                    <td><strong>{{ app.job.title }}</strong><br><small class="text-muted">ผู้จ้าง: {{ app.job.client.username }}</small></td>
+                    <td class="text-success fw-bold">{{ app.bid_price|floatformat:0 }} บาท</td>
+                    <td>{{ app.available|date:"d M Y" }}</td>
+                    <td>
+                        {% if app.status == 'PENDING' %}
+                            <span class="badge bg-secondary">รอผู้จ้างพิจารณา</span>
+                        {% elif app.status == 'ACCEPTED' %}
+                            <span class="badge bg-success">ได้รับคัดเลือก</span>
+                        {% else %}
+                            <span class="badge bg-danger">ไม่ได้รับคัดเลือก</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if app.job.status == 'PENDING' %}
+                            <span class="badge bg-info text-dark">ยังเปิดรับสมัครอยู่</span>
+                        {% elif app.job.status == 'MATCHED' %}
+                            <span class="badge bg-primary">กำลังเตรียมบิน (Matched)</span>
+                        {% elif app.job.status == 'IN_PROGRESS' %}
+                            <span class="badge bg-warning text-dark">กำลังดำเนินการ</span>
+                        {% elif app.job.status == 'COMPLETED' %}
+                            <span class="badge bg-success">งานเสร็จสิ้นสำเร็จ</span>
+                        {% else %}
+                            <span class="badge bg-danger">งานถูกยกเลิก</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'job_detail' app.job.pk %}" class="btn btn-outline-success btn-sm">ดูแผนที่พิกัด</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">คุณยังไม่มีประวัติการกดยื่นสมัครงานบินโดรนชิ้นใดๆ</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

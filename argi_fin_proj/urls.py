@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('app_core.urls')),
     path('boarding/', include('app_boarding.urls')),
+    path('landingpage/', include('app_core.urls')),  # เพิ่มเส้นทางสำหรับ landing page
 ]

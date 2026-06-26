@@ -13,4 +13,9 @@ urlpatterns = [
     
     # หน้าแดชบอร์ดส่วนตัว
     path('dashboard/', views.dashboard_view, name='dashboard'),
+
+    # ลงทะเบียนเป็นนักบินโดรน
+    path('pilot/register/', views.pilot_registration_view, name='pilot_register'),
+    
+    path('landingpage/', views.landing_page_view, name='landing_page'),
 ]

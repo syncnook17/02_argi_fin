@@ -44,4 +44,25 @@ class JobPosting(models.Model):
         return self.title
 
 
+# เก็บข้อมูลนักบินโดรนที่เสนอราคาและนัดหมาย
+class JobApplication(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'รอการตอบรับ'),
+        ('ACCEPTED', 'ผ่านการคัดเลือก'),
+        ('REJECTED', 'ปฏิเสธการคัดเลือก'),
+    ]
+    job = models.ForeignKey(JobPosting, on_delete=models.CASCADE, related_name='applications')
+    pilot = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_applications')
+    bid_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='ราคาที่เสนอ')
+    available_dates = models.DateField(help_text='วันที่ที่สามารถทำงานได้')
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='PENDING')
+    applied_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['job', 'pilot']
+
+    def __str__(self):
+        return f"งาน: {self.job.title} - นักบิน: {self.pilot.username} ({self.bid_price})"
+
+
 
