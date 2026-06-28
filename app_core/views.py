@@ -1,7 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .forms import PilotRegistrationForm
+from .forms import PilotRegistrationForm, SignUpForm
 from app_boarding.models import JobPosting, JobApplication
 
 # Create your views here.
@@ -50,5 +50,19 @@ def pilot_registration_view(request):
     
     return render(request, "app_core/pilot_register_form.html", {'form': form})
 
-def landing_page_view(request):
-    return render(request, "app_core/landing_page.html")
+
+# หน้าสมัครสมาชิกใหม่
+def signup_view(request):
+    # ถ้า login อยู่แล้วไม่ต้องให้สมัครซ่้ำ ไปหน้า DB เลย
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user) # สมัครเสร็จปุ๊บล็อกอินให้อัตโนมัติทันที อนาคตเอาออกให้ไปยืนยันเมลล์ก่อนเข้าใช้งาน
+            return redirect('dashboard')
+    else:
+        form = SignUpForm()
+    return render(request, "app_core/signup.html", {'form':form})

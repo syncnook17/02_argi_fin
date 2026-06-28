@@ -1,0 +1,52 @@
+{% extends 'base/base.html' %}
+{% block title %}สมัครสมาชิกใหม่ | DroneMarket{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm mt-4 border-0">
+            <div class="card-body p-4 bg-white rounded shadow-sm">
+                <h3 class="card-title text-center mb-2 fw-bold">📝 สมัครสมาชิกใหม่</h3>
+                <p class="text-muted text-center small mb-4">เริ่มต้นเข้าสู่ตลาดงานโดรน ร่วมประกาศงานหรือหางานบินโดรนรอบตัวคุณ</p>
+                <hr>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary">{{ field.label }}</label>
+                            {{ field }}
+                            
+                            {% if field.help_text %}
+                                <div class="form-text small text-muted style-help">{{ field.help_text|safe }}</div>
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                    <div class="text-danger small mt-1">❌ {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="btn btn-primary w-100 btn-lg mt-3">ยืนยันการสมัครสมาชิก</button>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <p class="mb-0 text-muted">มีบัญชีผู้ใช้งานอยู่แล้วใช่ไหม? <a href="{% url 'login' %}" class="text-decoration-none">เข้าสู่ระบบที่นี่</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* จัดการสไตล์ของคำแนะนำรหัสผ่านให้ดูเป็นระเบียบไม่รกหน้าจอ */
+    .style-help ul {
+        padding-left: 1.2rem;
+        margin-top: 0.25rem;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}

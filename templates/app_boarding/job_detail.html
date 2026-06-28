@@ -4,7 +4,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-    /* ตั้งขนาดของพื้นที่แสดงแผนที่ */
+    /* ตั้งขนาดพื้นที่สำหรับวาดระบบแผนที่ */
     #map {
         width: 100%;
         height: 380px;
@@ -16,7 +16,7 @@
 {% block content %}
 <div class="row">
     <div class="col-md-7">
-        <div class="p-4 bg-white shadow-sm rounded-3">
+        <div class="p-4 bg-white shadow-sm rounded-3 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="badge bg-primary fs-6">{{ job.category.name }}</span>
                 <span class="text-muted">ประกาศเมื่อ: {{ job.created_at|date:"d M Y" }}</span>
@@ -28,29 +28,194 @@
             <p class="text-secondary" style="white-space: pre-line;">{{ job.description }}</p>
             
             <div class="mt-4 alert alert-info">
-                <p class="mb-1">💰 <strong>งบประมาณที่ตั้งไว้:</strong> {{ job.budget_min }} - {{ job.budget_max }} บาท</p>
+                <p class="mb-1">💰 <strong>งบประมาณที่ตั้งไว้:</strong> {{ job.budget_min|floatformat:0 }} - {{ job.budget_max|floatformat:0 }} บาท</p>
                 <p class="mb-1">📅 <strong>วันทำงานจริง:</strong> {{ job.start_date|date:"d M Y H:i" }} น.</p>
                 <p class="mb-0">⏳ <strong>หมดเขตรับสมัคร:</strong> {{ job.deadline|date:"d M Y" }}</p>
             </div>
+            
+            <hr class="my-4">
+
+            {% if is_job_owner and job.status == 'PENDING' %}
+                <div class="border rounded-3 p-3 mb-4 bg-light">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h6 class="fw-bold mb-1">📌 ประกาศของคุณ</h6>
+                            <p class="small text-muted mb-0">คุณเป็นเจ้าของประกาศนี้ ไม่สามารถยื่นข้อเสนอราคาในงานของตัวเองได้</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'job_edit' job.pk %}" class="btn btn-outline-primary btn-sm px-3">✏️ แก้ไขประกาศ</a>
+                            <form method="post" action="{% url 'job_delete' job.pk %}" class="d-inline" onsubmit="return confirm('ยืนยันลบประกาศงานนี้? การลบไม่สามารถกู้คืนได้')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm px-3">🗑️ ลบประกาศ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if job.status != 'PENDING' %}
+                <div class="card bg-light border-0 p-3 mb-4">
+                    <h6 class="fw-bold text-dark mb-2">🛸 ข้อมูลผู้รับผิดชอบการบิน</h6>
+                    <p class="mb-1 text-muted small">นักบินปฏิบัติงาน: <strong>@{{ accepted_application.pilot.username }}</strong></p>
+                    <p class="mb-0 text-muted small">ราคาข้อตกลงจ้าง: <strong class="text-primary">{{ accepted_application.bid_price|floatformat:0 }} บาท</strong></p>
+                </div>
+
+                {% if is_accepted_pilot %}
+                    {% if job.status == 'MATCHED' %}
+                        <div class="alert alert-warning text-center shadow-sm">
+                            <p class="mb-3 fw-bold text-dark">คุณได้รับการคัดเลือกให้บินโดรนในงานชิ้นนี้เรียบร้อยแล้ว!</p>
+                            <a href="{% url 'start_job' job.pk %}" class="btn btn-primary w-100 fw-bold py-2">🚀 ฉันเดินทางถึงหน้างานแล้ว เริ่มปฏิบัติงานบิน</a>
+                        </div>
+                    {% elif job.status == 'IN_PROGRESS' %}
+                        <div class="bg-white p-3 border rounded shadow-sm">
+                            <h6 class="text-success fw-bold mb-3">📤 ฟอร์มส่งมอบผลงานและการรายงานบิน</h6>
+                            {% if deliverable %}
+                                <div class="alert alert-success py-2 small mb-3">
+                                    📢 คุณได้ส่งมอบลิงก์ผลงานแล้ว รอนายจ้างตรวจสอบความถูกต้อง:<br>
+                                    <a href="{{ deliverable.file_url }}" target="_blank" class="fw-bold text-break">{{ deliverable.file_url }}</a>
+                                </div>
+                            {% endif %}
+                            <form action="{% url 'submit_deliverable' job.pk %}" method="post">
+                                {% csrf_token %}
+                                <div class="mb-2">
+                                    <label class="small fw-bold text-secondary">แปะลิงก์ผลงานส่งมอบ (Google Drive / Dropbox / OneDrive)</label>
+                                    {{ deliverable_form.file_url }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="small fw-bold text-secondary">ระบุข้อความอธิบายเพิ่มเติมหรือรายละเอียดรายงาน</label>
+                                    {{ deliverable_form.notes }}
+                                </div>
+                                <button type="submit" class="btn btn-success w-100 btn-sm py-2 fw-bold">อัปเดตส่งมอบลิงก์ผลงานงานบิน</button>
+                            </form>
+                        </div>
+                    {% elif job.status == 'COMPLETED' %}
+                        <div class="alert alert-success text-center fw-bold p-3 shadow-sm">🎉 นายจ้างกดยืนยันรับมอบงานเรียบร้อยแล้ว ขอบคุณสำหรับการปฏิบัติหน้าที่!</div>
+                    {% endif %}
+                
+                {% elif user.is_authenticated and job.client == user %}
+                    {% if job.status == 'MATCHED' %}
+                        <div class="alert alert-info text-center small p-3">⏳ รอนักบินเดินทางถึงพื้นที่และกดปุ่มเริ่มปฏิบัติการงานบินโดรนหน้างาน</div>
+                    {% elif job.status == 'IN_PROGRESS' %}
+                        {% if deliverable %}
+                            <div class="p-4 border border-success rounded bg-white shadow-sm mb-3">
+                                <h6 class="text-success fw-bold mb-2">✨ นักบินได้ดำเนินการบินเสร็จสิ้นและส่งงานมาให้คุณแล้ว</h6>
+                                <p class="small text-muted mb-3">📄 บันทึกอธิบายจากนักบิน: {{ deliverable.notes|default:"-(ไม่มีข้อความเพิ่มเติม)-" }}</p>
+                                <a href="{{ deliverable.file_url }}" target="_blank" class="btn btn-outline-primary btn-sm w-100 mb-3 py-2 fw-bold">🔗 คลิกเพื่อเข้าตรวจสอบไฟล์ผลงานโดรน</a>
+                                
+                                <a href="{% url 'complete_job' job.pk %}" class="btn btn-success w-100 fw-bold py-2" onclick="return confirm('คุณได้ตรวจสอบไฟล์งานเรียบร้อยและยืนยันที่จะปิดจ้างงานชิ้นนี้ใช่ไหม?')">✅ ตรวจสอบไฟล์แล้ว ยืนยันรับมอบงานและปิดงาน</a>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning text-center small p-3">🚁 นักบินกำลังปฏิบัติงานจ้างโดรนในพื้นที่หน้างาน เมื่อนักบินส่งงาน ลิงก์ตรวจไฟล์จะปรากฏขึ้นตรงนี้อัตโนมัติ</div>
+                        {% endif %}
+                    {% elif job.status == 'COMPLETED' %}
+                        <div class="alert alert-success p-3 text-center shadow-sm bg-white border border-success">
+                            <h6 class="fw-bold text-success mb-2">🎉 ปิดโปรเจกต์งานเสร็จสิ้นสมบูรณ์แล้ว</h6>
+                            <a href="{{ deliverable.file_url }}" target="_blank" class="btn btn-sm btn-link text-decoration-none fw-bold">🔗 คลิกเปิดเข้าดูลิงก์ผลงานส่งมอบย้อนหลัง</a>
+                        </div>
+                    {% endif %}
+                
+                {% else %}
+                    <div class="alert alert-secondary text-center small p-3">🔒 งานชิ้นนี้ปิดรับสมัครแล้ว เนื่องจากระบุตัวผู้รับผิดชอบการบินขึ้นทำงานเรียบร้อยแล้ว</div>
+                {% endif %}
+
+            {% else %}
+                {% if is_pilot and not is_job_owner %}
+                    {% if has_applied and not edit_proposal %}
+                        <div class="border rounded-3 p-4 bg-white shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h6 class="text-success fw-bold mb-0">🎯 ข้อเสนอราคาที่ยืนยันแล้ว</h6>
+                                <span class="badge bg-secondary">{{ pilot_app_status.get_status_display }}</span>
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-sm-6">
+                                    <p class="small text-muted mb-1">ราคาค่าบริการที่ยื่นเสนอ</p>
+                                    <p class="fs-4 fw-bold text-primary mb-0">{{ pilot_app_status.bid_price|floatformat:0 }} <span class="fs-6 fw-normal text-muted">บาท</span></p>
+                                </div>
+                                <div class="col-sm-6">
+                                    <p class="small text-muted mb-1">วันที่พร้อมปฏิบัติหน้างาน</p>
+                                    <p class="fw-bold mb-0">{{ pilot_app_status.available_dates|date:"d M Y" }}</p>
+                                </div>
+                            </div>
+                            {% if pilot_app_status.status == 'PENDING' %}
+                                <a href="?edit=1" class="btn btn-outline-secondary btn-sm px-4">✏️ แก้ไขข้อเสนอ</a>
+                            {% endif %}
+                        </div>
+                    {% elif form %}
+                        <div class="border rounded-3 p-4 bg-white shadow-sm">
+                            <h6 class="text-success fw-bold mb-3">
+                                {% if edit_proposal %}✏️ แก้ไขข้อเสนอราคา{% else %}🎯 ยื่นข้อเสนอราคาปฏิบัติงานบินโดรน{% endif %}
+                            </h6>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="mb-2">
+                                    <label class="small fw-bold text-secondary">ราคาค่าบริการที่ต้องการยื่นเสนอ (บาท)</label>
+                                    {{ form.bid_price }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="small fw-bold text-secondary">วันที่คุณพร้อมไปปฏิบัติหน้างานจริง</label>
+                                    {{ form.available_dates }}
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success flex-grow-1 py-2 fw-bold">
+                                        {% if edit_proposal %}บันทึกข้อเสนอ{% else %}ส่งใบสมัครและข้อเสนอราคา{% endif %}
+                                    </button>
+                                    {% if edit_proposal %}
+                                        <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline-secondary py-2">ยกเลิก</a>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                {% if user.is_authenticated and job.client == user %}
+                    <h5 class="text-primary mb-3 fw-bold fs-6">📋 ตารางนักบินที่เข้ามายื่นข้อเสนอราคาแข่งกัน</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped align-middle small">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ชื่อนักบิน</th>
+                                    <th>ราคาที่เสนอ</th>
+                                    <th>วันที่สะดวกบิน</th>
+                                    <th class="text-center">การคัดเลือก</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for app in applications %}
+                                <tr>
+                                    <td><strong>@{{ app.pilot.username }}</strong></td>
+                                    <td class="text-primary fw-bold">{{ app.bid_price|floatformat:0 }} บ.</td>
+                                    <td>{{ app.available_dates|date:"d M Y" }}</td>
+                                    <td class="text-center">
+                                        <a href="{% url 'accept_application' app.pk %}" class="btn btn-sm btn-primary px-3" onclick="return confirm('คุณยืนยันที่จะเลือกนักบิน @{{ app.pilot.username }} ใช่ไหม?')">✔️ เลือกนักบินคนนี้</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">ยังไม่มีนักบินเข้ามายื่นข้อเสนอราคาในขณะนี้</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
     
     <div class="col-md-5">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h5 class="card-title mb-3">📍 ตำแหน่งและขอบเขตงานภูมิศาสตร์</h5>
-                <p class="text-muted mb-3">ที่อยู่หน้างาน: {{ job.address_text }}</p>
+        <div class="card shadow-sm border-0 bg-white">
+            <div class="card-body p-4">
+                <h5 class="card-title mb-3 fw-bold">📍 ตำแหน่งและขอบเขตงานภูมิศาสตร์</h5>
+                <p class="text-muted mb-3 small">ที่อยู่หน้างาน: <strong>{{ job.address_text }}</strong></p>
                 
-                <div id="map" class="border rounded"></div>
+                <div id="map" class="border rounded shadow-inner"></div>
                 
                 <div class="mt-3 text-end">
-                    <small class="text-muted">ประเภทข้อมูล GIS: <strong>{{ job.location.geom_type }}</strong></small>
+                    <small class="text-muted">ประเภทข้อมูลเชิงพื้นที่ GIS: <strong class="text-dark">{{ job.location.geom_type }}</strong></small>
                 </div>
                 
-                
-                <button class="btn btn-success w-100 btn-lg mt-4">🎯 ยื่นข้อเสนอรับงานนี้</button>
-                
-            </div>
+                </div>
         </div>
     </div>
 </div>
@@ -60,41 +225,38 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // 1. ตั้งค่าแผนที่เริ่มต้น (เปิดแผนที่ขึ้นมาก่อน)
+    // 1. ตั้งค่าแผนที่เริ่มต้น (เปิดแผนที่โฟกัสมาที่ประเทศไทยเบื้องต้น)
     var map = L.map('map').setView([13.736717, 100.523186], 6);
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // 2. ดึงข้อมูลพิกัดภูมิศาสตร์ GeoJSON จากหลังบ้าน GeoDjango
-    // 💡 สำคัญมาก: ต้องใส่ filter |safe เพื่อไม่ให้ Django แปลงเครื่องหมายคำพูดเป็นรหัสอักขระ HTML
+    // 2. ดึงข้อมูลพิกัดภูมิศาสตร์ GeoJSON ดิบจากหลังบ้าน GeoDjango ผ่าน filter |safe
     var geojsonData = {{ job.location.json|safe }};
 
-    // 3. สั่งให้ Leaflet วาดพิกัดจากข้อมูล GeoJSON ลงบนแผนที่อัตโนมัติ
+    // 3. สั่งให้ Leaflet แปลงข้อมูล GeoJSON และพ่นวาดเส้นกราฟิกลงบนแผนที่อัตโนมัติ
     var geojsonLayer = L.geoJSON(geojsonData, {
         style: function (feature) {
             return {
-                color: "#0d6efd",     // เส้นขอบสีน้ำเงิน Bootstrap
-                weight: 3,            // ความหนาเส้น
+                color: "#0d6efd",     // เส้นขอบแปลงสีน้ำเงิน Bootstrap
+                weight: 3,            // ความหนาของเส้น
                 fillColor: "#0d6efd", 
-                fillOpacity: 0.25     // ความโปร่งแสงของพื้นที่แปลง
+                fillOpacity: 0.22     // ความโปร่งแสงของพื้นที่ภายในแปลง
             };
         },
         pointToLayer: function (feature, latlng) {
-            // กรณีเป็นงานประเภทปักหมุด (Point) ให้แสดงผลเป็นตัวมาร์กเกอร์
+            // กรณีเป็นข้อมูลประเภท Point (ถ่ายหมุดภาพ) ให้แสดงผลเป็นหมุดมาร์กเกอร์มาตรฐาน
             return L.marker(latlng);
         }
     }).addTo(map);
 
-    // 4. 🔥 เขียนคำสั่งคำนวณระยะการซูม (Auto Zoom & Pan) เพื่อให้แผนที่วิ่งไปโฟกัสรูปที่วาดทันที
+    // 4. ระบบ Auto-Zoom และปรับเฟรมหน้าจอให้โฟกัสจับวัตถุภูมิศาสตร์ที่วาดไว้อัตโนมัติ
     if (geojsonData.type === "Point") {
-        // งานปักจุดถ่ายภาพ: ให้กระโดดไปหาพิกัดนั้น และซูมเข้าไปใกล้ๆ เลเวล 15
         var coords = geojsonData.coordinates;
-        map.setView([coords[1], coords[0]], 15);
+        map.setView([coords[1], coords[0]], 15); // กระโดดไปหาจุดแล้วซูมลึกระดับ 15
     } else {
-        // งานวาดแปลงเกษตร หรือลากเส้นทางถนน: ให้ขยายหน้าจอให้พอดีกับขอบเขต (Bounds) ของรูปนั้นทั้งหมดพอดี
-        map.fitBounds(geojsonLayer.getBounds(), { padding: [20, 20] });
+        map.fitBounds(geojsonLayer.getBounds(), { padding: [30, 30] }); // ขยายเฟรมแผนที่ให้ครอบคลุมพื้นที่แปลงเกษตรพอดี
     }
 </script>
 {% endblock %}

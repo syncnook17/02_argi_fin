@@ -17,5 +17,6 @@ urlpatterns = [
     # ลงทะเบียนเป็นนักบินโดรน
     path('pilot/register/', views.pilot_registration_view, name='pilot_register'),
     
-    path('landingpage/', views.landing_page_view, name='landing_page'),
+    path('signup/', views.signup_view, name='signup'),
+
 ]

@@ -108,7 +108,7 @@
                 <tr>
                     <td><strong>{{ app.job.title }}</strong><br><small class="text-muted">ผู้จ้าง: {{ app.job.client.username }}</small></td>
                     <td class="text-success fw-bold">{{ app.bid_price|floatformat:0 }} บาท</td>
-                    <td>{{ app.available|date:"d M Y" }}</td>
+                    <td>{{ app.available_dates|date:"d M Y" }}</td>
                     <td>
                         {% if app.status == 'PENDING' %}
                             <span class="badge bg-secondary">รอผู้จ้างพิจารณา</span>

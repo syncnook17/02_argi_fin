@@ -66,3 +66,11 @@ class JobApplication(models.Model):
 
 
 
+# สำหรับการเก็บข้อมูลการส่งมอบงานและบันทึก
+class JobDeliverable(models.Model):
+    application = models.ForeignKey(JobApplication, on_delete=models.CASCADE, related_name='deliverables')
+    file_url = models.URLField(verbose_name='URL ของไฟล์')
+    note = models.TextField(blank=True, null=True, verbose_name='บันทึกข้อมูลเพิ่มเติม')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"ผลงานของงาน {self.application.job.title} โดย {self.application.pilot.username}"

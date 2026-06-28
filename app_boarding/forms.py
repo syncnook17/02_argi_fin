@@ -1,6 +1,9 @@
+
 from django import forms
 from django.contrib.gis import forms as gis_forms
-from .models import JobCategory, JobPosting, JobApplication
+from .models import *
+
+    
 
 class JobPostingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -34,4 +37,14 @@ class JobApplicationForm(forms.ModelForm):
         widgets = {
             'bid_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'ราคาที่เสนอ'}),
             'available_dates': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
+# สร้างฟอร์มสำหรับการส่งมอบงานของ class JobDeliverable(models.Model):
+class JobDeliverableForm(forms.ModelForm):
+    class Meta:
+        model = JobDeliverable
+        fields = ['file_url', 'note']
+        widgets = {
+            'file_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'ลิงค์ของไฟล์'}),
+            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
